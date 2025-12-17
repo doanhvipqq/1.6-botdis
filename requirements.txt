@@ -4,3 +4,4 @@ qrcode
 colorama
 requests
 discord.py
+flask
