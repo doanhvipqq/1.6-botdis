@@ -1,6 +1,27 @@
 import os
 import discord
 from discord.ext import commands
+from threading import Thread
+from flask import Flask
+
+# --- CẤU HÌNH WEB SERVER ĐỂ GIỮ BOT SỐNG TRÊN RENDER ---
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot Discord đang chạy ổn định!"
+
+def run_web():
+    # Render cung cấp biến môi trường PORT, nếu không có thì dùng 8080
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run_web)
+    t.start()
+# -------------------------------------------------------
+
+# Import các module của bạn
 from notification import register_notification
 from bot.qr import register_qr, register_qrurl
 #from bot.nct import register_nct
@@ -36,7 +57,7 @@ async def on_ready():
     except Exception as e:
         print(f"Lỗi khi đồng bộ lệnh slash: {e}")
 
-# Đăng ký các lệnh/sự kiện từ các module (các hàm register_ cần được chuyển hướng theo discord.py)
+# Đăng ký các lệnh/sự kiện từ các module
 register_qr(bot)
 #register_nct(bot)
 register_ngl(bot)
@@ -55,5 +76,11 @@ register_sourceweb(bot)
 register_notification(bot)
 
 if __name__ == '__main__':
-    print("Bot Discord đang hoạt động...")
-    bot.run(TOKEN)
+    # Chạy web server trước để Render nhận diện Port
+    keep_alive()
+    
+    print("Bot Discord đang khởi động...")
+    if TOKEN:
+        bot.run(TOKEN)
+    else:
+        print("LỖI: Chưa tìm thấy biến môi trường DISCORD_TOKEN!")
